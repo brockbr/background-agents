@@ -169,7 +169,7 @@ A review or PR comment is queued only when all of the following hold:
 - The pull request is open.
 - The pull request was created by an OpenInspect session. Feedback on other PRs is skipped as untracked.
 - The feedback kind is enabled: a submitted review (with **Submitted reviews**) or a plain PR comment (with **Plain human PR comments**).
-- The author is allowed. A human author needs write permission on the pull request. A bot author is accepted only for reviews: the app's own reviews when OpenInspect reviews (labelled **Open Inspect reviews** in the form) are on, and third-party bots listed exactly in **Exact third-party review bots**. Bot-authored top-level comments are never eligible.
+- The author is allowed. A human author needs write permission on the pull request. A bot author is accepted only for reviews: the app's own reviews when OpenInspect reviews (labelled **<app name> reviews** in the form, **Open-Inspect reviews** by default) are on, and third-party bots listed exactly in **Exact third-party review bots**. Bot-authored top-level comments are never eligible.
 - A human PR comment that `@mentions` the bot is not an Autofix input; it goes through the fresh-session mention flow instead.
 - A review is in the Commented or Changes requested state and has content, or it is an approval that starts at least one new inline comment thread. Approvals with only a summary or only thread replies are skipped, as is empty feedback.
 
@@ -180,7 +180,7 @@ A review or PR comment is queued only when all of the following hold:
 | Enable Autofix                | "Admit new eligible feedback into the owning session."                                       | Off     |
 | Submitted reviews             | "One complete submitted review creates one attempt."                                         | On      |
 | Plain human PR comments       | Top-level human comments on the PR; "Mentions continue to use the fresh-session flow."       | On      |
-| OpenInspect reviews           | "Allow reviews from the configured Open Inspect App, regardless of workflow."                | On      |
+| OpenInspect reviews           | "Allow reviews from the configured <app name> App, regardless of workflow."                  | On      |
 | Exact third-party review bots | Comma-separated exact bot usernames, for example `coderabbitai[bot]`. Other bots are skipped | Empty   |
 | Attempts per PR per 24 hours  | A positive number, or **No Autofix attempt limit**                                           | 30      |
 

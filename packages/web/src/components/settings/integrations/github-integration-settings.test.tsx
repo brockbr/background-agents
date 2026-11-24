@@ -11,6 +11,7 @@ import {
   type GitHubBotSettings,
   type GitHubGlobalConfig,
 } from "@open-inspect/shared/types/integrations";
+import { APP_NAME } from "@/lib/site-config";
 import { GitHubIntegrationSettings } from "./github-integration-settings";
 
 let search = "";
@@ -313,7 +314,7 @@ describe("GitHubIntegrationSettings", () => {
       "true"
     );
     expect(
-      screen.getByText(/reviews from the configured Open Inspect App, regardless of workflow/i)
+      screen.getByText(`Allow reviews from the configured ${APP_NAME} App, regardless of workflow.`)
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("switch", { name: "Enable Autofix" }));
