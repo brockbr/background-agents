@@ -16,7 +16,7 @@ from .configuration import IMAGE_PACKAGE, RUNTIME_PACKAGE, read_json, runtime_en
 from .locks import export_requirements, update_locks
 
 DOCKER_PACKAGES = ("engine", "cli", "containerd", "buildx", "compose")
-PROVIDERS = ("modal", "daytona", "e2b", "vercel", "boat", "ec2")
+PROVIDERS = ("modal", "daytona", "e2b", "vercel", "boat", "ec2", "proxmox")
 EXCLUDED = {
     ".terraform",
     ".git",
@@ -47,6 +47,15 @@ INFRA_MODULES = {
     # The AMI is built by hand and selected with a Terraform variable, so no
     # module's inputs feed its build.
     "ec2": None,
+    # The template is built by hand against the Proxmox API; no module feeds it.
+    "proxmox": None,
+}
+# Files another provider's builder owns but this provider's image installs.
+SHARED_INFRA_FILES = {
+    "proxmox": tuple(
+        Path("packages/ec2-infra") / name
+        for name in ("launcher.sh", "exec-runtime.py", "openinspect-sandbox.service")
+    ),
 }
 
 
@@ -163,6 +172,7 @@ def plan_image(root: Path, provider: str) -> ImagePlan:
         IMAGE_PACKAGE / "targets.json",
         Path(f"packages/{provider}-infra"),
     )
+    paths += SHARED_INFRA_FILES.get(provider, ())
     if INFRA_MODULES[provider] is not None:
         paths += (Path(f"terraform/modules/{INFRA_MODULES[provider]}"),)
     if provider == "vercel":

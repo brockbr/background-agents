@@ -1,0 +1,13 @@
+[Unit]
+Description=Open-Inspect sandbox bootstrap from SMBIOS (Proxmox)
+DefaultDependencies=no
+After=local-fs.target
+Before=openinspect-sandbox.service
+ConditionPathExists=!/etc/openinspect/session.json
+
+[Service]
+Type=oneshot
+ExecStart=/opt/openinspect/python/bin/python /opt/openinspect/proxmox/seed-bootstrap.py
+
+[Install]
+WantedBy=multi-user.target
