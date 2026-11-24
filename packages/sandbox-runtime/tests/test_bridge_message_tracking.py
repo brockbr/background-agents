@@ -123,6 +123,25 @@ class TestBuildPromptRequestBody:
         assert body["variant"] == effort
         assert set(body["model"]) == {"providerID", "modelID"}
 
+    def test_self_hosted_placeholder_targets_the_served_model(
+        self, bridge: AgentBridge, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.setenv("SELF_HOSTED_MODEL", "qwen3.6-35b-a3b")
+        body = bridge.harness.prompt_stream._build_prompt_request_body(
+            "Hello", "self-hosted/default", reasoning_effort="high"
+        )
+        assert body["model"] == {"providerID": "self-hosted", "modelID": "qwen3.6-35b-a3b"}
+        assert "variant" not in body
+
+    def test_self_hosted_without_a_served_model_keeps_the_placeholder(
+        self, bridge: AgentBridge, monkeypatch: pytest.MonkeyPatch
+    ):
+        monkeypatch.delenv("SELF_HOSTED_MODEL", raising=False)
+        body = bridge.harness.prompt_stream._build_prompt_request_body(
+            "Hello", "self-hosted/default"
+        )
+        assert body["model"] == {"providerID": "self-hosted", "modelID": "default"}
+
     def test_no_effort_preserves_opencode_default(self, bridge: AgentBridge):
         body = bridge.harness.prompt_stream._build_prompt_request_body(
             "Hello", "openai/gpt-5.6-sol"

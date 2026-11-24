@@ -6,6 +6,7 @@ import {
   MODEL_CATALOG,
   MODEL_OPTIONS,
   MODEL_REASONING_CONFIG,
+  SELF_HOSTED_PROVIDER_ID,
   VALID_MODELS,
   applyModelPreferenceChanges,
   extractProviderAndModel,
@@ -102,6 +103,7 @@ const GO_MODELS = [
 ] as const;
 
 const DEEPSEEK_MODELS = ["deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro"] as const;
+const SELF_HOSTED_MODELS = ["self-hosted/default"] as const;
 const KIMI_CODE_PLAN_MODELS = [
   "kimi-code-plan-global/k3.1-pro",
   "kimi-code-plan-global/k3.1-pro-highspeed",
@@ -246,6 +248,7 @@ describe("model utilities", () => {
       ...KIMI_CODE_PLAN_MODELS,
       ...ZAI_CODING_PLAN_MODELS,
       ...DEEPSEEK_MODELS,
+      ...SELF_HOSTED_MODELS,
     ]) {
       expect(isValidModel(model)).toBe(true);
     }
@@ -412,6 +415,15 @@ describe("model utilities", () => {
     expect(getSubscriptionProviderForModel("xai/grok-4.6")).toBe("xai");
     expect(getSubscriptionProviderForModel("anthropic/claude-sonnet-4-6")).toBe("anthropic");
     expect(getSubscriptionProviderForModel("deepseek/deepseek-v4-pro")).toBeNull();
+    expect(getSubscriptionProviderForModel("self-hosted/default")).toBeNull();
+  });
+
+  it("routes the self-hosted model to its own provider prefix", () => {
+    expect(extractProviderAndModel("self-hosted/default")).toEqual({
+      provider: SELF_HOSTED_PROVIDER_ID,
+      model: "default",
+    });
+    expect(supportsReasoning("self-hosted/default")).toBe(false);
   });
 
   it("rejects bare, malformed, and unknown billing model routes", () => {
@@ -621,6 +633,7 @@ describe("model utilities", () => {
     expect(isValidReasoningEffort("xai/grok-build-0.1", "high")).toBe(false);
     expect(isValidReasoningEffort("xai/grok-build-0.1", "xhigh")).toBe(false);
     expect(isValidReasoningEffort("deepseek/deepseek-v4-pro", "high")).toBe(false);
+    expect(isValidReasoningEffort("self-hosted/default", "high")).toBe(false);
     expect(isValidReasoningEffort("invalid", "high")).toBe(false);
     expect(isValidReasoningEffort("anthropic/claude-sonnet-4-5", "")).toBe(false);
   });
@@ -650,6 +663,9 @@ describe("model utilities", () => {
     expect(
       MODEL_OPTIONS.find((group) => group.category === "DeepSeek")?.models.map((m) => m.id)
     ).toEqual(DEEPSEEK_MODELS);
+    expect(
+      MODEL_OPTIONS.find((group) => group.category === "Self-hosted")?.models.map((m) => m.id)
+    ).toEqual(SELF_HOSTED_MODELS);
 
     expect(DEFAULT_ENABLED_MODELS).toEqual([...ANTHROPIC_MODELS, ...OPENAI_MODELS]);
     for (const optInModel of [
@@ -659,6 +675,7 @@ describe("model utilities", () => {
       ...KIMI_CODE_PLAN_MODELS,
       ...ZAI_CODING_PLAN_MODELS,
       ...DEEPSEEK_MODELS,
+      ...SELF_HOSTED_MODELS,
     ]) {
       expect(DEFAULT_ENABLED_MODELS).not.toContain(optInModel);
     }

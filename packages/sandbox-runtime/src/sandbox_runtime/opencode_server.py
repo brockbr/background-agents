@@ -19,6 +19,7 @@ from .mcp_packages import McpPackageInstaller
 from .memories import memory_path
 from .process_output import iter_process_lines
 from .sandbox_bin import install_bin_scripts
+from .self_hosted_provider import SELF_HOSTED_PROVIDER_ID, build_self_hosted_provider
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sequence
@@ -405,6 +406,28 @@ class OpenCodeServer:
                 config[name] = entry
         return config
 
+    def _configure_self_hosted(self, opencode_config: dict[str, Any]) -> None:
+        """Point the session at the deployment's OpenAI-compatible endpoint.
+
+        The catalog model ``self-hosted/default`` is a placeholder: the served
+        model name and endpoint come from ``SELF_HOSTED_*`` secrets. When they
+        are missing the config is left as-is, so OpenCode reports an unknown
+        model on the first prompt, and the gap is surfaced as a boot warning.
+        """
+        result = build_self_hosted_provider(os.environ)
+        for message in result.warnings:
+            self.record_boot_warning(scope="model", message=message)
+        if result.entry is None or result.model is None:
+            return
+        opencode_config["model"] = f"{SELF_HOSTED_PROVIDER_ID}/{result.model}"
+        opencode_config["provider"][SELF_HOSTED_PROVIDER_ID] = result.entry
+        self.log.info(
+            "self_hosted.configured",
+            model=result.model,
+            base_url=result.entry["options"]["baseURL"],
+            api_key=("apiKey" in result.entry["options"]),
+        )
+
     async def start(self, repositories: Sequence[RepoEntry], workdir: Path) -> None:
         """Start OpenCode server with configuration."""
         self._setup_managed_oauth()
@@ -432,6 +455,9 @@ class OpenCodeServer:
                 }
             },
         }
+
+        if self.provider == SELF_HOSTED_PROVIDER_ID:
+            self._configure_self_hosted(opencode_config)
 
         memory_file = memory_path(resolve_opencode_global_config_dir())
         if memory_file.is_file() and memory_file.stat().st_size:

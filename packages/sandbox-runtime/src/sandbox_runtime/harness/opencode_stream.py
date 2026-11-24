@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import os
 import re
 import time
 from contextlib import AsyncExitStack
@@ -21,6 +22,7 @@ from ..child_activity import (
 )
 from ..message_attribution import AssistantMessageDisposition, MessageAttribution
 from ..opencode_identifier import OpenCodeIdentifier
+from ..self_hosted_provider import SELF_HOSTED_PROVIDER_ID, served_model
 from .opencode_client import (
     SSEConnectionError,
     SSEInactivityTimeoutError,
@@ -869,6 +871,10 @@ class OpenCodePromptStream:
                 provider_id, model_id = model.split("/", 1)
             else:
                 provider_id, model_id = "anthropic", model
+            if provider_id == SELF_HOSTED_PROVIDER_ID:
+                # The catalog's placeholder stands for the served model the
+                # provider entry was built for (see self_hosted_provider.py).
+                model_id = served_model(os.environ) or model_id
             model_spec: dict[str, Any] = {
                 "providerID": provider_id,
                 "modelID": model_id,

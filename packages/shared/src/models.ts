@@ -524,7 +524,25 @@ export const MODEL_CATALOG = [
       { id: "deepseek/deepseek-v4-pro", name: "DeepSeek V4 Pro", description: "Most capable" },
     ],
   },
+  {
+    // One deployment-configured OpenAI-compatible endpoint (vLLM, llama.cpp, Ollama,
+    // LiteLLM, ...). The catalog entry is fixed; the endpoint, served model and limits
+    // come from SELF_HOSTED_* secrets that the sandbox runtime turns into an OpenCode
+    // provider. See SELF_HOSTED_PROVIDER_ID and docs/AVAILABLE_MODELS.md.
+    category: "Self-hosted",
+    enabledByDefault: false,
+    models: [
+      {
+        id: "self-hosted/default",
+        name: "Self-hosted model",
+        description: "OpenAI-compatible endpoint",
+      },
+    ],
+  },
 ] as const satisfies readonly ModelCatalogGroup[];
+
+/** Provider prefix of the deployment-configured OpenAI-compatible model. */
+export const SELF_HOSTED_PROVIDER_ID = "self-hosted";
 
 export type ValidModel = (typeof MODEL_CATALOG)[number]["models"][number]["id"];
 

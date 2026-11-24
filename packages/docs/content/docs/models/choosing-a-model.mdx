@@ -36,6 +36,7 @@ Settings › Models lists every model in the catalog, grouped by provider, under
 | Kimi Coding Plan | No                 |
 | Z.AI Coding Plan | No                 |
 | DeepSeek         | No                 |
+| Self-hosted      | No                 |
 
 The deployment default model is Claude Sonnet 4.6 (`anthropic/claude-sonnet-4-6`). It is used when nothing else (a session, an integration setting, or an automation) picks a model.
 
@@ -218,6 +219,14 @@ Runs on OpenCode only. Opt-in group. Credential: `DEEPSEEK_API_KEY` as a global 
 | ---------------------------- | ----------------- | ----------------- | -------------- |
 | `deepseek/deepseek-v4-flash` | DeepSeek V4 Flash | Not supported     | N/A            |
 | `deepseek/deepseek-v4-pro`   | DeepSeek V4 Pro   | Not supported     | N/A            |
+
+### Self-hosted
+
+Runs on OpenCode only. Opt-in group. One OpenAI-compatible endpoint you run yourself, configured with secrets: `SELF_HOSTED_BASE_URL` and `SELF_HOSTED_MODEL` (required), `SELF_HOSTED_API_KEY`, `SELF_HOSTED_CONTEXT_LIMIT` and `SELF_HOSTED_OUTPUT_LIMIT` (optional). A repository secret overrides the global one, so one repository can use a different model. `SELF_HOSTED_BASE_URL` includes the API prefix (for example `http://10.0.0.50:8000/v1`), `SELF_HOSTED_MODEL` is the name the server expects in requests, and the server must support tool calls. Secrets are set as described in [Secrets](/configure/secrets).
+
+| Model ID              | Display name      | Reasoning efforts | Default effort |
+| --------------------- | ----------------- | ----------------- | -------------- |
+| `self-hosted/default` | Self-hosted model | Not supported     | N/A            |
 
 ## The same model behind several gateways
 

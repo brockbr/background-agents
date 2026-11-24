@@ -2,10 +2,11 @@
 
 Open-Inspect exposes these models in the model picker and integration preferences. The default
 enabled set includes Anthropic and OpenAI models. xAI / SuperGrok, OpenCode Zen, OpenCode Go, Kimi
-Coding Plan, Z.AI Coding Plan, and DeepSeek models are available but must be enabled in **Settings >
-Models**. OpenAI and SuperGrok subscriptions are configured in **Settings > Provider Accounts**;
-OpenCode Zen and OpenCode Go require `OPENCODE_API_KEY`; Kimi Coding Plan requires `KIMI_API_KEY`;
-Z.AI Coding Plan requires `ZHIPU_API_KEY`; DeepSeek requires `DEEPSEEK_API_KEY`.
+Coding Plan, Z.AI Coding Plan, DeepSeek, and Self-hosted models are available but must be enabled in
+**Settings > Models**. OpenAI and SuperGrok subscriptions are configured in **Settings > Provider
+Accounts**; OpenCode Zen and OpenCode Go require `OPENCODE_API_KEY`; Kimi Coding Plan requires
+`KIMI_API_KEY`; Z.AI Coding Plan requires `ZHIPU_API_KEY`; DeepSeek requires `DEEPSEEK_API_KEY`;
+Self-hosted requires `SELF_HOSTED_BASE_URL` and `SELF_HOSTED_MODEL`.
 
 OpenAI, xAI and Anthropic session selectors offer provider policy, any active connected account, and
 API-key mode. Automation editors can resolve defaults on each run or pin an account/API-key choice.
@@ -204,3 +205,34 @@ DeepSeek models require `DEEPSEEK_API_KEY` as a global or repository secret.
 | ---------------------------- | ----------------- | ------------ | ----------------- | -------------- |
 | `deepseek/deepseek-v4-flash` | DeepSeek V4 Flash | Fast model   | Not supported     | N/A            |
 | `deepseek/deepseek-v4-pro`   | DeepSeek V4 Pro   | Most capable | Not supported     | N/A            |
+
+## Self-hosted
+
+One OpenAI-compatible endpoint you run yourself (vLLM, llama.cpp server, Ollama, LiteLLM, or any
+other server that speaks `/v1/chat/completions` with tool calls). The catalog has a single fixed
+entry; what it points at comes from secrets, which the sandbox exposes as environment variables.
+Runs on the OpenCode harness only.
+
+| Model ID              | Display name      | Description                | Reasoning efforts | Default effort |
+| --------------------- | ----------------- | -------------------------- | ----------------- | -------------- |
+| `self-hosted/default` | Self-hosted model | OpenAI-compatible endpoint | Not supported     | N/A            |
+
+Secrets:
+
+- `SELF_HOSTED_BASE_URL` (required): base URL including the API prefix, e.g.
+  `http://10.0.0.50:8000/v1`.
+- `SELF_HOSTED_MODEL` (required): the model name the server expects in requests (vLLM
+  `--served-model-name`).
+- `SELF_HOSTED_API_KEY` (optional): sent as a Bearer token. Omit for servers without authentication.
+- `SELF_HOSTED_CONTEXT_LIMIT` (optional): context window in tokens, used by OpenCode to decide when
+  to compact. Default 131072.
+- `SELF_HOSTED_OUTPUT_LIMIT` (optional): maximum output tokens per response. Default 32768.
+
+Set them as global secrets for the deployment, or as repository secrets to point one repository at a
+different model. The sandbox must be able to reach the URL: a server on a private network needs a
+sandbox provider that runs inside, or is routed to, that network. Tool calling has to work for an
+agent to do anything useful; with vLLM that means `--enable-auto-tool-choice` and the
+`--tool-call-parser` that matches the model.
+
+If either required secret is missing, the session still starts, records a boot warning naming the
+missing variables, and the model fails on the first prompt rather than hanging.
