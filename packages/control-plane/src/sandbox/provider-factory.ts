@@ -13,6 +13,8 @@ import type { SandboxProvider } from "./provider";
 import { createBoatProvider, type BoatSandboxProvider } from "./providers/boat-provider";
 import { createDaytonaProvider, type DaytonaSandboxProvider } from "./providers/daytona-provider";
 import { createEc2Provider, type Ec2SandboxProvider } from "./providers/ec2-provider";
+import { createProxmoxProvider, type ProxmoxSandboxProvider } from "./providers/proxmox-provider";
+import { createProxmoxSandboxApi } from "./proxmox-api";
 import type { SandboxBootstrapStore } from "./bootstrap";
 import {
   createE2BProvider,
@@ -222,6 +224,82 @@ function createEc2ProviderFromEnv(
   });
 }
 
+export const DEFAULT_PROXMOX_SANDBOX_VMID_MIN = 8000;
+export const DEFAULT_PROXMOX_SANDBOX_VMID_MAX = 8999;
+
+const PROXMOX_REQUIRED_SETTINGS = [
+  "PROXMOX_API_URL",
+  "PROXMOX_API_TOKEN_ID",
+  "PROXMOX_API_TOKEN_SECRET",
+  "PROXMOX_NODE",
+  "PROXMOX_SANDBOX_TEMPLATE_VMID",
+  "PROXMOX_SANDBOX_POOL",
+] as const;
+
+function parsePositiveIntegerEnv(
+  name: string,
+  value: string | undefined,
+  defaultValue: number | undefined
+): number | undefined {
+  const raw = value?.trim();
+  if (!raw) return defaultValue;
+  if (!/^\d+$/.test(raw)) throw new Error(`${name} must be a non-negative integer`);
+  return Number(raw);
+}
+
+function createProxmoxProviderFromEnv(
+  env: Env,
+  bootstrapStore: SandboxBootstrapStore | undefined
+): ProxmoxSandboxProvider {
+  const missing = PROXMOX_REQUIRED_SETTINGS.filter((name) => !env[name]?.trim());
+  if (missing.length > 0) {
+    throw new Error(`${missing.join(", ")} required when SANDBOX_PROVIDER=proxmox`);
+  }
+  if (!bootstrapStore) {
+    throw new Error("SANDBOX_PROVIDER=proxmox requires a session bootstrap store");
+  }
+  const vmidMin = parsePositiveIntegerEnv(
+    "PROXMOX_SANDBOX_VMID_MIN",
+    env.PROXMOX_SANDBOX_VMID_MIN,
+    DEFAULT_PROXMOX_SANDBOX_VMID_MIN
+  )!;
+  const vmidMax = parsePositiveIntegerEnv(
+    "PROXMOX_SANDBOX_VMID_MAX",
+    env.PROXMOX_SANDBOX_VMID_MAX,
+    DEFAULT_PROXMOX_SANDBOX_VMID_MAX
+  )!;
+  if (vmidMin < 100 || vmidMax < vmidMin) {
+    throw new Error("PROXMOX_SANDBOX_VMID_MIN/MAX must be a range of VMIDs from 100 up");
+  }
+  const api = createProxmoxSandboxApi({
+    url: env.PROXMOX_API_URL!.trim(),
+    tokenId: env.PROXMOX_API_TOKEN_ID!.trim(),
+    tokenSecret: env.PROXMOX_API_TOKEN_SECRET!.trim(),
+    node: env.PROXMOX_NODE!.trim(),
+  });
+  return createProxmoxProvider(api, bootstrapStore, {
+    scmProvider: resolveScmProviderFromEnv(env.SCM_PROVIDER),
+    templateVmid: parsePositiveIntegerEnv(
+      "PROXMOX_SANDBOX_TEMPLATE_VMID",
+      env.PROXMOX_SANDBOX_TEMPLATE_VMID,
+      undefined
+    )!,
+    pool: env.PROXMOX_SANDBOX_POOL!.trim(),
+    vmidMin,
+    vmidMax,
+    maxRunning:
+      parsePositiveIntegerEnv("PROXMOX_SANDBOX_MAX_RUNNING", env.PROXMOX_SANDBOX_MAX_RUNNING, 0) ??
+      0,
+    cores: parsePositiveIntegerEnv("PROXMOX_SANDBOX_CORES", env.PROXMOX_SANDBOX_CORES, undefined),
+    memoryMib: parsePositiveIntegerEnv(
+      "PROXMOX_SANDBOX_MEMORY_MIB",
+      env.PROXMOX_SANDBOX_MEMORY_MIB,
+      undefined
+    ),
+    deploymentName: env.DEPLOYMENT_NAME,
+  });
+}
+
 export function createSandboxProviderFromEnv(env: Env, backend: "boat"): BoatSandboxProvider;
 export function createSandboxProviderFromEnv(env: Env, backend: "daytona"): DaytonaSandboxProvider;
 export function createSandboxProviderFromEnv(env: Env, backend: "e2b"): E2BSandboxProvider;
@@ -237,6 +315,11 @@ export function createSandboxProviderFromEnv(
 ): Ec2SandboxProvider;
 export function createSandboxProviderFromEnv(
   env: Env,
+  backend: "proxmox",
+  bootstrapStore: SandboxBootstrapStore
+): ProxmoxSandboxProvider;
+export function createSandboxProviderFromEnv(
+  env: Env,
   backend?: SandboxBackendName,
   bootstrapStore?: SandboxBootstrapStore
 ): SandboxProvider;
@@ -248,6 +331,8 @@ export function createSandboxProviderFromEnv(
   switch (backend) {
     case "ec2":
       return createEc2ProviderFromEnv(env, bootstrapStore);
+    case "proxmox":
+      return createProxmoxProviderFromEnv(env, bootstrapStore);
     case "boat":
       return createBoatProviderFromEnv(env);
     case "daytona":

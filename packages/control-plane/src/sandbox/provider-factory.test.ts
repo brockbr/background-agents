@@ -156,4 +156,62 @@ describe("createSandboxProviderFromEnv", () => {
       expect(createSandboxProviderFromEnv(env, "ec2", bootstrapStore).name).toBe("ec2");
     });
   });
+
+  describe("proxmox", () => {
+    const bootstrapStore: SandboxBootstrapStore = { put: vi.fn(), consume: vi.fn() };
+    const proxmoxSettings = {
+      PROXMOX_API_URL: "https://pve.example.com:8006",
+      PROXMOX_API_TOKEN_ID: "openinspect@pve!control-plane",
+      PROXMOX_API_TOKEN_SECRET: "secret",
+      PROXMOX_NODE: "pve",
+      PROXMOX_SANDBOX_TEMPLATE_VMID: "9000",
+      PROXMOX_SANDBOX_POOL: "openinspect",
+    };
+
+    it("needs a session bootstrap store", () => {
+      const env = createEnv(proxmoxSettings);
+      expect(() => createSandboxProviderFromEnv(env, "proxmox", undefined as never)).toThrow(
+        "requires a session bootstrap store"
+      );
+    });
+
+    it("names every missing setting", () => {
+      const env = createEnv({ PROXMOX_API_URL: "https://pve.example.com:8006" });
+      expect(() => createSandboxProviderFromEnv(env, "proxmox", bootstrapStore)).toThrow(
+        "PROXMOX_API_TOKEN_ID, PROXMOX_API_TOKEN_SECRET, PROXMOX_NODE, PROXMOX_SANDBOX_TEMPLATE_VMID, PROXMOX_SANDBOX_POOL required"
+      );
+    });
+
+    it.each([
+      [
+        "a non-numeric template",
+        { PROXMOX_SANDBOX_TEMPLATE_VMID: "tpl" },
+        "must be a non-negative integer",
+      ],
+      [
+        "an inverted VMID range",
+        { PROXMOX_SANDBOX_VMID_MIN: "9000", PROXMOX_SANDBOX_VMID_MAX: "8000" },
+        "range of VMIDs",
+      ],
+      [
+        "a negative running cap",
+        { PROXMOX_SANDBOX_MAX_RUNNING: "-1" },
+        "must be a non-negative integer",
+      ],
+    ])("rejects %s", (_name, overrides, message) => {
+      const env = createEnv({ ...proxmoxSettings, ...overrides });
+      expect(() => createSandboxProviderFromEnv(env, "proxmox", bootstrapStore)).toThrow(message);
+    });
+
+    it("creates the provider from complete configuration", () => {
+      const env = createEnv({ ...proxmoxSettings, PROXMOX_SANDBOX_MAX_RUNNING: "2" });
+      const provider = createSandboxProviderFromEnv(env, "proxmox", bootstrapStore);
+      expect(provider.name).toBe("proxmox");
+      expect(provider.capabilities).toMatchObject({
+        supportsPersistentResume: true,
+        supportsExplicitStop: true,
+        supportsSnapshots: false,
+      });
+    });
+  });
 });
