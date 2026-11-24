@@ -5,6 +5,7 @@ import {
   SettingsIcon,
 } from "@/components/ui/icons";
 import { SESSIONS_PATH } from "@/lib/session-discovery";
+import { APP_NAME } from "@/lib/site-config";
 import { TeamsIcon } from "@/components/teams/teams-icon";
 import type { PermissionId } from "@open-inspect/shared/rbac";
 import type { ComponentType } from "react";
@@ -19,7 +20,7 @@ export interface AppDestination {
 
 export const SETTINGS_DESTINATION = {
   label: "Settings",
-  description: "Configure Open Inspect",
+  description: `Configure ${APP_NAME}`,
   href: "/settings",
   icon: SettingsIcon,
 } as const satisfies AppDestination;

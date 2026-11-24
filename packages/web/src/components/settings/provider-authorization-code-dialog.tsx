@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { ProviderAuthorizationCodeStatusResponse } from "@open-inspect/shared/types/provider-accounts";
 import { useProviderAuthorizationCode } from "@/hooks/use-provider-authorization-code";
+import { APP_NAME } from "@/lib/site-config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,8 +32,7 @@ type ConnectedAuthorization = Extract<
   { status: "connected" }
 >;
 
-export const ANTHROPIC_CREDENTIAL_ROTATION_WARNING =
-  "Sessions that already received this credential keep it until their sandbox exits. Reconnecting rotates what Open Inspect stores; it does not revoke the token at Anthropic.";
+export const ANTHROPIC_CREDENTIAL_ROTATION_WARNING = `Sessions that already received this credential keep it until their sandbox exits. Reconnecting rotates what ${APP_NAME} stores; it does not revoke the token at Anthropic.`;
 
 const PROVIDER_CONTENT = {
   anthropic: {

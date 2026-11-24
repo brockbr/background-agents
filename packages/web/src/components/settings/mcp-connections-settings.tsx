@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { toast } from "sonner";
 import type { McpPersonalConnection } from "@open-inspect/shared/types/integrations";
 import { browserApiFetch } from "@/lib/browser-api-fetch";
+import { APP_NAME } from "@/lib/site-config";
 import { Button } from "@/components/ui/button";
 
 const labels = {
@@ -40,7 +41,7 @@ export function McpConnectionsSettings() {
         throw new Error("Connection unavailable. Try again or contact your administrator.");
       if (disconnect) {
         await mutate();
-        toast.success("Disconnected from Open Inspect");
+        toast.success(`Disconnected from ${APP_NAME}`);
       } else {
         const { authorizationUrl } = (await response.json()) as { authorizationUrl: string };
         const url = new URL(authorizationUrl);
@@ -103,7 +104,7 @@ export function McpConnectionsSettings() {
         </div>
       ))}
       <p className="text-xs text-muted-foreground">
-        Disconnecting prevents new use through Open Inspect. It does not undo actions already
+        Disconnecting prevents new use through {APP_NAME}. It does not undo actions already
         submitted or revoke the account at the external service.
       </p>
     </section>
