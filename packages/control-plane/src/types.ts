@@ -68,7 +68,7 @@ export interface EnvConfig {
   ALLOWED_GITHUB_ORGS?: string;
   UNSAFE_ALLOW_ALL_USERS?: string;
   CF_ACCOUNT_ID?: string; // Cloudflare account ID
-  SANDBOX_PROVIDER?: string; // "modal" (default), "modal-vm", "daytona", "vercel", "e2b", "boat", or "ec2"
+  SANDBOX_PROVIDER?: string; // "modal" (default), "modal-vm", "daytona", "vercel", "e2b", "boat", "ec2", or "proxmox"
   MODAL_WORKSPACE?: string; // Modal workspace name
   MODAL_ENVIRONMENT?: string; // Modal environment name for dashboard URLs
   MODAL_ENVIRONMENT_WEB_SUFFIX?: string; // Modal environment web suffix for endpoint URLs
@@ -109,6 +109,17 @@ export interface EnvConfig {
   EC2_SANDBOX_SUBNET_ID?: string; // Subnet sandboxes launch into
   EC2_SANDBOX_SECURITY_GROUP_ID?: string; // Security group for sandboxes
   EC2_SANDBOX_INSTANCE_PROFILE_ARN?: string; // Instance profile for sandboxes; its role grants nothing
+  PROXMOX_API_URL?: string; // Proxmox VE API base, e.g. https://pve.example.com:8006
+  PROXMOX_API_TOKEN_ID?: string; // API token ID, e.g. openinspect@pve!control-plane
+  PROXMOX_API_TOKEN_SECRET?: string; // API token secret
+  PROXMOX_NODE?: string; // Node that holds the template and runs session VMs
+  PROXMOX_SANDBOX_TEMPLATE_VMID?: string; // Template built by packages/proxmox-infra
+  PROXMOX_SANDBOX_POOL?: string; // Resource pool session VMs are cloned into
+  PROXMOX_SANDBOX_VMID_MIN?: string; // First VMID for session VMs; default 8000
+  PROXMOX_SANDBOX_VMID_MAX?: string; // Last VMID for session VMs; default 8999
+  PROXMOX_SANDBOX_MAX_RUNNING?: string; // Running session VMs allowed at once; 0 or unset = no limit
+  PROXMOX_SANDBOX_CORES?: string; // vCPUs per session VM; default: the template's
+  PROXMOX_SANDBOX_MEMORY_MIB?: string; // Memory per session VM; default: the template's
   EC2_SANDBOX_CONTROL_PLANE_PRIVATE_HOST?: string; // DNS name resolving, inside the sandboxes' VPC, to the control plane's private address
 
   // Sandbox lifecycle configuration
